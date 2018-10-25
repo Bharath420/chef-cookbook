@@ -1,0 +1,40 @@
+#Create the directory where dynatrace will be installed
+directory "#{node['mc_jenkins_agent_images']['dynatrace']}/#{node['dynatraceVersion']}" do
+  owner user
+  group group
+  mode  '0755'
+  recursive true
+  action :create
+end
+
+#Pull down the dynatrace jar  from artifactory so it is in place for dynatrace recipe
+remote_file "#{node['mc_jenkins_agent_images']['dynatrace']}/#{node['mc_jenkins_agent_images']['dynatraceJar']}" do
+  source "http://globalrepository.mclocal.int/svn/dynatrace/trunk/packages/agent/7.0/#{node['mc_jenkins_agent_images']['dynatraceJar']}"
+  owner user
+  group group
+  mode  '0755'
+  action :create
+end
+
+#dynatrace installation
+execute "run #{node['mc_jenkins_agent_images']['dynatraceJar']} in #{node['mc_jenkins_agent_images']['dynatrace']}" do
+  command "#{node['mc_jenkins_agent_images']['java']}/jdk1.8.0_102/bin/java -jar #{node['mc_jenkins_agent_images']['dynatrace']}/#{node['mc_jenkins_agent_images']['dynatraceJar']} -y -t #{node['mc_jenkins_agent_images']['dynatrace']}/#{node['mc_jenkins_agent_images']['dynatraceVersion']}"
+  user user
+  group group
+  action :run
+end
+
+#update file permission
+execute "chmod #{node['mc_jenkins_agent_images']['dynatrace']}" do
+  command "chmod -R 0755 #{node['mc_jenkins_agent_images']['dynatrace']}/#{node['mc_jenkins_agent_images']['dynatraceVersion']}"
+  user user
+  group group
+  action :run
+end
+
+#softlinking dynatrace folder to dynatraceagent
+link 'dynatraceagent' do
+ to "#{node['mc_jenkins_agent_images']['dynatrace']}/#{node['mc_jenkins_agent_images']['dynatraceVersion']}"
+ owner user
+ group group
+end
